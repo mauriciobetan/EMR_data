@@ -1,4 +1,4 @@
-## Agroecology-rift
+## EMR_data
 
 This repository holds the research data for the article "The Death of Guano? The Exogenous Metabolic Rift and the Systemic Factors Driving the Collapse of Peru’s Guano System." It includes an [input](/input) folder where the raw data downloaded from the Internet was placed. There is also an [organize_data.R](/organize_data.R) script that reads in raw data, performs data manipulation, and outputs an analytical dataset ready to be used for the analysis. The [output](/output) folder has a copy of the final dataset. Additionally, in [check_packages.R](/check_packages.R), there is a list of all libraries used in the R script for the analysis. The [Figures.Rmd](/Figures.Rmd) folder has the code utilized to generate the figures in the article. Lastly, the supplementary_material file has the full interview and focus group questions.
     
