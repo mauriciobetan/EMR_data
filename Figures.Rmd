@@ -7,7 +7,7 @@ source("useful_functions.R")
 ```
 
 ```{r loaddata, include=FALSE}
-load("output/final_dataset.RData")
+load("output/analytical_data.RData")
 
 
 # Code for generating Figure 1
