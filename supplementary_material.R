@@ -1,4 +1,4 @@
-##This are the full interview and focus group questions in their original Spanish and their English translations. 
+##These are the full interview and focus group questions in their original Spanish, alongside their English translations. 
 ## Supplementary material
 
 Supplementary Material 
