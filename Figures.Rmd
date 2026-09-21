@@ -7,12 +7,259 @@ source("useful_functions.R")
 ```
 
 ```{r loaddata, include=FALSE}
-load("output/analytical_data.RData")
+load("output/final_dataset.RData")
 
 
 # Code for generating Figure 1
 
+## El Niño and Avian Flu shading data with intensity labels
+
+event_shading <- tribble(
+  ~xmin, ~xmax, ~event,
+  # Very Strong Events (ONI ≥ 2.0°C)
+  1965, 1966, "Very Strong El Niño", # Peak ONI 2.0°C
+  1972, 1973, "Very Strong El Niño", # Peak ONI 2.1°C
+  1982, 1983, "Very Strong El Niño", # Peak ONI 2.2°C
+  1997, 1998, "Very Strong El Niño", # Peak ONI 2.3°C
+  2015, 2016, "Very Strong El Niño", # Peak ONI 2.3°C
+  2026, 2027, "Very Strong El Niño", # Peak ONI 2.3°C
+  
+  # Strong Events (ONI ≥ 1.5°C & < 2.0°C)
+  1957, 1958, "Strong El Niño",      # Peak ONI 1.8°C
+  1987, 1988, "Strong El Niño",      # Peak ONI 1.7°C
+  1991, 1992, "Strong El Niño",      # Peak ONI 1.8°C
+  2023, 2024, "Strong El Niño",      # Peak ONI 1.7°C
+  
+  # Other Annotations
+  2022 + 10/12, 2023 + 5/12, "Avian Flu"  # Nov 2022 to May 2023
+)
+
+# Create scaling factor so birds are visible
+
+max_birds <- max(final_dataset$birds_t, na.rm = TRUE)
+max_ssb <- max(final_dataset$ssb, na.rm = TRUE)
+scaling_factor <- max_birds / max_ssb
+
+# PLOT
+ggplot() +
+  
+  # Shaded event bands
+  geom_rect(
+    data = event_shading,
+    inherit.aes = FALSE,
+    aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = event),
+    alpha = 0.3,
+    show.legend = TRUE) +
+  
+  # Guano birds
+  geom_line(data = final_dataset,
+            aes(x = year, y = birds_t, color = "Guano Birds"),
+            size = 1.1) +
+  
+  geom_point(data = final_dataset,
+             aes(x = year, y = birds_t, color = "Guano Birds"),
+             size = 1) +
+  
+  # Anchovy catch
+  geom_line(data = final_dataset,
+            aes(x = year, y = anch_catch* scaling_factor, color = "Anchoveta Landings"),
+            linetype = 5, size = 0.8) +
+#  geom_point(data = final_dataset,
+#             aes(x = year, y = anch_catch, color = "Anchoveta Landings"),
+#             shape = 24, fill="#6baed6", size = 0.8) +
+  
+  # SSB BIOMASS
+  geom_line(data = final_dataset,
+            aes(x = year, y = ssb* scaling_factor, color = "SSB"),
+            size = 1.1) +
+  geom_point(data = final_dataset,
+             aes(x = year, y = ssb* scaling_factor, color = "SSB"),
+             size = 1.1) +
+
+# Fix Axes
+# x axis
+  scale_x_continuous(breaks = c(seq(1910, 2020, 10), 2025), expand = c(0, 0),
+  limits = c(1907.5, 2027)) +
+# y axes  
+scale_y_continuous(name = "Guano Birds (millions)", limits = c(-0.3, 25),
+     breaks = seq(0, 25, 2),
+     expand = c(0, 0),
+sec.axis = sec_axis(
+      trans = ~ . / scaling_factor,
+      name = "Anchoveta SSB (million t)",
+      breaks = seq(0, 18, 2))) +
+
+# Colors
+scale_color_manual(name = "Variable",
+  breaks = c("Guano Birds", "SSB", "Anchoveta Landings"),
+  values = c("Guano Birds" = "#d7191c", "Anchoveta Landings" = "#6baed6", "SSB" = "#2c7bb6")) +
+  scale_fill_manual(name = "Event",
+    breaks = c("Strong El Niño", "Very Strong El Niño", "Avian Flu"),
+    values = c(
+      "Strong El Niño" = "#a6dba0",       
+      "Very Strong El Niño" = "#008837",
+      "Avian Flu" = "#d01c8b")) +
+  
+  # Theme
+  labs(x = "Year", title = "") +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    legend.title = element_blank(),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    legend.position = "bottom",
+    # Bold axis labels
+    axis.title.x = element_text(face = "bold"),
+    axis.title.y = element_text(face = "bold"),
+    axis.title.y.right = element_text(face = "bold"),
+    # Remove legend key background
+    legend.key = element_blank()) +
+    guides(color = guide_legend(order = 1, override.aes = list(fill = NA, shape = NA)),
+    fill = guide_legend(order = 2, override.aes = list(linetype = 0, shape = NA)))
+
 
 # Code for generating Figure 2
 
+# Spanish month names
+spanish_months <- c("Enero" = 1, "Febrero" = 2, "Marzo" = 3, "Abril" = 4,
+                    "Mayo" = 5, "Junio" = 6, "Julio" = 7, "Agosto" = 8,
+                    "Septiembre" = 9, "Octubre" = 10, "Noviembre" = 11, 
+                    "Diciembre" = 12)
+
+# Prepare data
+monthly_data <- aves_guaneras %>%
+  rename(Sitio = `Islas y puntas`) %>%
+  mutate(
+    Mes_num = spanish_months[Mes],
+    Fecha = make_date(Año, Mes_num, 1),
+    Guanay = `Guanay Reproductivo` + `Guanay No Reproductivo`,
+    Piquero = `Piquero Reproductivo` + `Piquero No Reproductivo`,
+    Pelicano = `Pelícano Reproductivo` + `Pelícano No Reproductivo`,
+    Total_Adults = Guanay + Piquero + Pelicano
+  ) %>%
+  group_by(Fecha) %>%
+  summarise(across(c(Guanay, Piquero, Pelicano, Total_Adults), sum, na.rm = TRUE)) %>%
+  filter(Fecha >= "2022-01-01") %>%
+  filter(!(year(Fecha) == 2022 & month(Fecha) == 12)) %>%
+  pivot_longer(cols = c(Guanay, Piquero, Pelicano), names_to = "Especie", 
+               values_to = "Poblacion") %>%
+  mutate(Especie = ifelse(Especie == "Pelicano", "Pelican", Especie))
+
+# Event shading
+event_shading <- tribble(
+  ~xmin, ~xmax, ~event, ~color,
+  "2023-06-01", "2024-04-01", "El Niño", "orange",
+  "2022-11-01", "2023-05-01", "Avian Flu", "red"
+) %>% mutate(across(c(xmin, xmax), as.Date))
+
+# Labels
+label_data <- monthly_data %>%
+  group_by(Fecha) %>%
+  slice(1) %>%
+  
+  filter(
+    (month(Fecha) %% 2 == 0 |
+       Fecha %in% as.Date(c("2023-07-01", "2026-03-01", "2022-01-01"))) &
+      !Fecha %in% as.Date(c("2023-08-01", "2026-02-01", "2022-04-01", "2022-08-01"))
+  ) %>%
+  
+  mutate(
+    angle = 45,
+    hjust = -0.1,
+    vjust = -1.2,
+    
+    angle = case_when(
+      Fecha == as.Date("2022-01-01") ~ 270,
+      Fecha == as.Date("2022-06-01") ~ 0,
+      Fecha == as.Date("2022-08-01") ~ 180,
+      Fecha == as.Date("2026-03-01") ~ 270,
+      Fecha == as.Date("2022-02-01") ~ 270,
+      Fecha == as.Date("2022-10-01") ~ 270,
+      TRUE ~ angle
+    ),
+    
+    hjust = case_when(
+      Fecha == as.Date("2022-01-01") ~ 1.1,
+      Fecha == as.Date("2023-02-01") ~ -0.5,
+      Fecha == as.Date("2022-06-01") ~ 0.5,
+      Fecha == as.Date("2022-08-01") ~ -0.5,
+      Fecha == as.Date("2026-03-01") ~ 1.2,
+      Fecha == as.Date("2022-02-01") ~ 1.3,
+      Fecha == as.Date("2022-10-01") ~ 1.1,
+      TRUE ~ hjust
+    ),
+    
+    vjust = case_when(
+      Fecha == as.Date("2022-01-01") ~ -0.2,
+      Fecha == as.Date("2023-02-01") ~ -2.0,
+      Fecha == as.Date("2022-06-01") ~ -1,
+      Fecha == as.Date("2022-08-01") ~ 0,
+      Fecha == as.Date("2026-03-01") ~ 0.3,
+      Fecha == as.Date("2022-10-01") ~ 0.5,
+      TRUE ~ vjust
+    )
+  )
+
+# Plot
+ggplot(monthly_data) +
+  
+  geom_rect(data = event_shading,
+            aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = 5500000, fill = event),
+            alpha = 0.2) +
+  
+  geom_col(aes(x = Fecha, y = Poblacion, fill = Especie),
+           alpha = 0.8, position = "stack") +
+  
+  geom_line(aes(x = Fecha, y = Total_Adults),
+            color = "black", size = 0.7, linetype = "dashed") +
+  
+  geom_point(aes(x = Fecha, y = Total_Adults),
+             color = "black", size = 1.2) +
+  
+  geom_text(data = label_data,
+            aes(x = Fecha, y = Total_Adults,
+                label = scales::comma(Total_Adults),
+                angle = angle, hjust = hjust, vjust = vjust),
+            size = 2.7, color = "black") +
+  
+  scale_x_date(
+    limits = c(as.Date("2021-12-15"), as.Date("2026-03-15")),
+    expand = c(0, 0),
+    breaks = seq.Date(
+      from = as.Date("2022-01-01"),
+      to = as.Date("2026-03-01"),
+      by = "1 month"),
+    date_labels = "%b %Y") +
+  
+  scale_y_continuous(
+    name = "Adult birds (millions)",
+    labels = function(x) x / 1000000,
+    limits = c(0, 5500000),
+    breaks = seq(0, 5500000, by = 1000000),
+    expand = c(0, 0)) +
+  
+  scale_fill_manual(
+    name = "",
+    values = c("El Niño" = "orange",
+               "Avian Flu" = "red",
+               "Guanay" = "#1f77b4",
+               "Piquero" = "#ff7f0e",
+               "Pelican" = "#2ca02c"),
+    breaks = c("Guanay", "Piquero", "Pelican", "Avian Flu", "El Niño")) +
+  
+  labs(title = "", x = "Date") +
+  
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.box = "horizontal",
+    legend.key.size = unit(0.5, "cm"),
+    legend.spacing.x = unit(0.5, "cm"),
+    axis.title.x = element_text(face = "bold", size = 12),
+    axis.title.y = element_text(face = "bold", size = 12)) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE))
 
