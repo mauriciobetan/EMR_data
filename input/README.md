@@ -1,6 +1,6 @@
 # Input Directory
 
-This directory contains unedited data files directly from the sources.
+This directory contains the links to obtain the unedited data files directly from the sources.
 
 1. 1908-2008 Birds from Salvacetti 2018: https://doi.pangaea.de/10.1594/PANGAEA.888403?format=html#download
 
