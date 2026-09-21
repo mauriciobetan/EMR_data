@@ -9,13 +9,13 @@ source("useful_functions.R")
 #I. LOAD
 
 # 1. 1908-2008 Birds from Salvacetti 2018: https://doi.pangaea.de/10.1594/PANGAEA.888403?format=html#download
-guano_birds <- read_excel("~/Downloads/guano_birds_peru.xlsx")
+guano_birds <- read_excel("~/guano_birds_peru.xlsx")
 # 2. Anchoveta catch, 1950-2024: https://www.fao.org/fishery/statistics-query/en?dataset=capture&timeseries=capture_quantity
-fish_fao <- read_excel("~/Downloads/capture_quantity-7.xlsx")
+fish_fao <- read_excel("~/capture_quantity_fao.xlsx")
 # 3. Anchoveta biomass (SSB). From Oliveros-Ramos, p. 306-307
-ssb_biomass <- read_excel("~/Downloads/anchoveta_biomass_ssb.xlsx")
+ssb_biomass <- read_excel("~/anchoveta_biomass_ssb.xlsx")
 #. AGRORURAL birds census available upon request.
-aves_guaneras <- read_excel("~/Downloads/aves_guaneras.xlsx")
+aves_guaneras <- read_excel("~/aves_guaneras_agrorural.xlsx")
 
 ### II. EDIT AND MERGE DATASETS
 
