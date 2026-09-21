@@ -43,4 +43,4 @@ final_dataset <-merge(guano_birds, fish_fao, all.x=TRUE, all.y=TRUE)
 final_dataset <-merge(final_dataset, ssb_biomass, all.x=TRUE, all.y=TRUE)
 
 #Save dataset in output directory
-save(final, file="output/analytical_data.RData")
+save(final_dataset, file="output/analytical_data.RData")
