@@ -30,7 +30,7 @@ event_shading <- tribble(
   1991, 1992, "Strong El Niño",      # Peak ONI 1.8°C
   2023, 2024, "Strong El Niño",      # Peak ONI 1.7°C
   
-  # Other Annotations
+  # AVIAN FLU
   2022 + 10/12, 2023 + 5/12, "Avian Flu"  # Nov 2022 to May 2023
 )
 
